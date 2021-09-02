@@ -110,10 +110,45 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   res.redirect("/urls")
 })
 
-//login route
+//get login route
+app.get("/login", (req, res) => {
+  const templateVars = { 
+    user: req.cookies["user_id"],
+    users: users   };
+  res.render("urls_login", templateVars)
+})
+
+//post login route
 app.post("/login", (req, res) => {
-  res.cookie("user_id", req.body.username);
-  res.redirect("/urls");
+  const email = req.body.email;
+  const password = req.body.password;
+
+  const templateVars = { 
+    user: req.cookies["user_id"],
+    users: users   };
+
+  if (email === "" || password === "") {
+    res.statusCode = 403;
+  } 
+  
+  if (emailLookup(email)) {
+    for (let key in users) {
+      if (users[key]["password"] === password) {
+        console.log("found", users[key]["password"])
+        res.redirect("/urls");
+        
+      } else {
+        res.statusCode = 403;
+      }
+    }
+    
+  } else if (!emailLookup(email)) {
+    res.statusCode = 403;
+  };
+  
+  res.cookie("user_id", req.body.username)
+  // res.render("urls_login", templateVars)
+  // res.cookie("user_id", req.body.username);
 });
 
 //logout route
@@ -142,7 +177,8 @@ app.post("/register", (req, res) => {
   const keyId = id;
 
   if (email === "" || password === "") {
-    return res.send("404: Please enter in an email/password.")
+    // return res.send("404: Please enter in an email/password.")
+    res.statusCode = 404;
   } 
   
   if (!emailLookup(email)) {
@@ -152,7 +188,8 @@ app.post("/register", (req, res) => {
       password
     }
   } else if (emailLookup(email)) {
-    return res.send("404: This email already exists.");
+    // return res.send("404: This email already exists.");
+    res.statusCode = 404;
   };
 
   console.log(req.body)
