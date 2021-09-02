@@ -2,8 +2,14 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 let uniqueURL = "";
+// const cookieSession = require('cookie-session');
 
 app.set("view engine", "ejs");
+
+// app.use(cookieSession({
+//   name: 'session',
+//   keys: ['key1', 'key2']
+// }));
 
 function generateRandomString() {
   uniqueURL = Math.random().toString(36).substr(2, 6);
@@ -73,6 +79,13 @@ app.get("/urls/new", (req, res) => {
   const templateVars = { 
     user: req.cookies["user_id"],
     users: users    };
+  // let userCookie = req.session.user_id;
+  console.log("cookie found")
+  console.log("reqcookieuserid", req.cookies.user_id)
+  if (!req.cookies.user_id) {
+    console.log("cookie not found")
+    return res.redirect("/login");
+  }
   res.render("urls_new", templateVars);
 });
 
