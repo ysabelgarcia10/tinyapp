@@ -62,30 +62,21 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
-//main - lists all shortURL with corresponding long ones
-app.post("/urls", (req, res) => {
-  const randomURL = generateRandomString();
-  urlDatabase[randomURL] = req.body.longURL;
-  const templateVars = { 
-    urls: urlDatabase,
-    user: req.cookies["user_id"],
-    users: users   };
-  res.render("urls_index", templateVars);
-  console.log(urlDatabase);
-});
+
 
 //link to a page to create a new URL
 app.get("/urls/new", (req, res) => {
   const templateVars = { 
     user: req.cookies["user_id"],
     users: users    };
-  // let userCookie = req.session.user_id;
+  
   console.log("cookie found")
   console.log("reqcookieuserid", req.cookies.user_id)
   if (!req.cookies.user_id) {
     console.log("cookie not found")
     return res.redirect("/login");
   }
+
   res.render("urls_new", templateVars);
 });
 
@@ -146,6 +137,23 @@ app.post("/login", (req, res) => {
   } else {
     return res.status(403).send("The username or password do not match.")
   }
+});
+
+//main - lists all shortURL with corresponding long ones
+app.post("/urls", (req, res) => {
+  if (!req.cookies.user_id) {
+    return res.status(403).send("log in first");
+  };
+
+  const randomURL = generateRandomString();
+  urlDatabase[randomURL] = req.body.longURL;
+  console.log("under post urls", req.cookies.user_id);
+  const templateVars = { 
+    urls: urlDatabase,
+    user: req.cookies["user_id"],
+    users: users   };
+  res.render("urls_index", templateVars);
+  console.log(urlDatabase);
 });
 
 //logout route

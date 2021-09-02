@@ -14,15 +14,13 @@
       <a class="nav-item nav-link" href="/login">Login</a>
       <a class="nav-item nav-link" href="/register">Register</a>
 
-      <!-- <form method="POST" action="/login">
-        <input type="text" name="username">
-        <button type="submit" class="btn btn-primary">Login</button></label>
-      </form> -->
+
     <% } else { %>
       <form method="POST" action="/logout">
         <label for="logout">
         <h5>Logged in as:  <%= users[user].email %></h5>
-        <button type="submit" class="btn btn-primary">Logout</button></label>
+        <button type="submit" class="btn btn-primary">Logout</button></label> 
+      </form>
     <% } %>
   </nav>
 </header>
