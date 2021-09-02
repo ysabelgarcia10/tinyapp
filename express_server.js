@@ -11,11 +11,13 @@ app.set("view engine", "ejs");
 //   keys: ['key1', 'key2']
 // }));
 
+//implementing random string function for creation of shortURL string
 function generateRandomString() {
   uniqueURL = Math.random().toString(36).substr(2, 6);
   return uniqueURL;
-}
+};
 
+//implementing email look up function to determine whether the email exists.
 const emailLookup = (email) => {
   for (let key in users) {
     if (email === users[key]["email"]) {
@@ -23,7 +25,20 @@ const emailLookup = (email) => {
     }
   }
   return undefined;
-}
+};
+
+//implementing filter of the url database based on specific userIDs.
+const urlsForUser = (id) => {
+  let urlDatabaseFilter = {};
+
+  for (let key in urlDatabase) {
+    console.log("urldatabasekey", urlDatabase[key])
+    if(Object.values(urlDatabase[key]).indexOf(id) > -1) {
+      urlDatabaseFilter[key] = urlDatabase[key]
+    }
+  }
+  return urlDatabaseFilter;
+};
 
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
@@ -61,8 +76,10 @@ app.get("/", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
+  let filteredURLS = urlsForUser(req.cookies["user_id"])
+  console.log("filteredURLS", filteredURLS);
   const templateVars = { 
-    urls: urlDatabase,
+    urls: urlsForUser(req.cookies["user_id"]),
     user: req.cookies["user_id"],
     users: users    };
   res.render("urls_index", templateVars);
@@ -83,7 +100,7 @@ app.post("/urls", (req, res) => {
 
   console.log("under post urls", req.cookies.user_id);
   const templateVars = { 
-    urls: urlDatabase,
+    urls: urlsForUser(req.cookies["user_id"]),
     user: req.cookies["user_id"],
     users: users   };
   res.render("urls_index", templateVars);
@@ -126,7 +143,6 @@ app.post("/register", (req, res) => {
     // res.statusCode = 404;
   };
   
-  console.log(req.body)
   console.log(users);
   res.cookie("user_id", keyId)
   .redirect("/"); //res is a promise, res is async
@@ -146,7 +162,6 @@ app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   const userKey = emailLookup(email);
-  console.log("emailexists-userkey", userKey)
 
   if (!emailLookup(email)) {
     return res.status(403).send("Cannot find email.")
@@ -165,10 +180,7 @@ app.get("/urls/new", (req, res) => {
     user: req.cookies["user_id"],
     users: users    };
   
-  console.log("cookie found")
-  console.log("reqcookieuserid", req.cookies.user_id)
   if (!req.cookies.user_id) {
-    console.log("cookie not found")
     return res.redirect("/login");
   }
 
@@ -177,17 +189,12 @@ app.get("/urls/new", (req, res) => {
 
 //display one single shortURL
 app.get("/urls/:shortURL", (req, res) => {
-  // console.log("reqbody", req.body)
-  // console.log("reqparamsshortURL", req.params.shortURL)
   const shortURL = req.params.shortURL;
-  console.log("shortURL", shortURL)
-  console.log("match", urlDatabase[shortURL]);
   
   if (urlDatabase[shortURL] === undefined) {
     return res.status(404).send("This tinyApp link does not exist.");
   };
 
-  // console.log("longURL", urlDatabase[shortURL]['longURL'])
   const longURL = urlDatabase[shortURL]["longURL"];
   const templateVars = { 
     shortURL,
@@ -202,16 +209,13 @@ app.get("/urls/:shortURL", (req, res) => {
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL]["longURL"];
-  console.log("longURL to redirect", longURL)
-  console.log("shorturl", urlDatabase[shortURL])
+
   res.redirect(longURL);
   
 });
 
 //link to edit the shortURL
 app.post("/urls/:shortURL", (req, res) => {
-  // console.log("after changing the linnk")
-  // console.log(longURL)
   const shortURL = req.params.shortURL;
   const longURL = req.body.longURL
   urlDatabase[shortURL]["longURL"] = longURL;
