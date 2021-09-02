@@ -180,7 +180,13 @@ app.get("/urls/:shortURL", (req, res) => {
   // console.log("reqbody", req.body)
   // console.log("reqparamsshortURL", req.params.shortURL)
   const shortURL = req.params.shortURL;
-  // console.log("shortURL", shortURL)
+  console.log("shortURL", shortURL)
+  console.log("match", urlDatabase[shortURL]);
+  
+  if (urlDatabase[shortURL] === undefined) {
+    return res.status(404).send("This tinyApp link does not exist.");
+  };
+
   // console.log("longURL", urlDatabase[shortURL]['longURL'])
   const longURL = urlDatabase[shortURL]["longURL"];
   const templateVars = { 
@@ -188,15 +194,18 @@ app.get("/urls/:shortURL", (req, res) => {
     longURL,
     user: req.cookies["user_id"], 
     users: users    };
-    
+
   res.render("urls_show", templateVars);
 });
 
 //redirecting to longURL upon clicking on the shortURL
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL]["longURL"];
+  const shortURL = req.params.shortURL;
+  const longURL = urlDatabase[shortURL]["longURL"];
   console.log("longURL to redirect", longURL)
+  console.log("shorturl", urlDatabase[shortURL])
   res.redirect(longURL);
+  
 });
 
 //link to edit the shortURL
