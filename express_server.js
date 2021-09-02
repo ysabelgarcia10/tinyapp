@@ -13,10 +13,10 @@ function generateRandomString() {
 const emailLookup = (email) => {
   for (let key in users) {
     if (email === users[key]["email"]) {
-      return true;
+      return key;
     }
   }
-  return false;
+  return undefined;
 }
 
 const bodyParser = require("body-parser");
@@ -122,40 +122,17 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
+  const userKey = emailLookup(email);
+  console.log("emailexists-userkey", userKey)
 
-  const templateVars = { 
-    user: req.cookies["user_id"],
-    users: users   };
-
-  if (email === "" || password === "") {
-    res.status(403).end
-  } 
-  
-  if (emailLookup(email)) {
-    for (let key in users) {
-      console.log("userskeypass", users[key]["password"])
-      console.log("pass:", password)
-
-      if (users[key]["password"] === password && users[key]["email"] === email) {
-        console.log("found", users[key]["password"])
-        console.log(users)
-        console.log("reqbodyusername", req.body.id)
-        res.cookie("user_id", users[key]["id"])
-        res.redirect("/urls")
-      }
-    }
-
-    console.log("found email, pass not matching.")
-    return res.sendStatus(403)
-
-  } else if (!emailLookup(email)) {
-    console.log("email not found")
-    res.sendStatus(403)
+  if (!emailLookup(email)) {
+    return res.status(403).send("Cannot find email.")
+  } else if (users[userKey]["password"] === password && users[userKey]["email"] === email) {
+    res.cookie("user_id", userKey)
+    res.redirect("/urls")
+  } else {
+    return res.status(403).send("The username or password do not match.")
   }
-
-  res.render("urls_login", templateVars)
-  // res.cookie("user_id", req.body.username);
-  // .redirect("/")
 });
 
 //logout route
@@ -195,7 +172,7 @@ app.post("/register", (req, res) => {
       password
     }
 
-  } else if (emailLookup(email)) {
+  } else if (emailLookup(email) !== undefined) {
     return res.send("404: This email already exists.");
     // res.statusCode = 404;
   };
