@@ -128,27 +128,34 @@ app.post("/login", (req, res) => {
     users: users   };
 
   if (email === "" || password === "") {
-    res.statusCode = 403;
+    res.status(403).end
   } 
   
   if (emailLookup(email)) {
     for (let key in users) {
-      if (users[key]["password"] === password) {
+      console.log("userskeypass", users[key]["password"])
+      console.log("pass:", password)
+
+      if (users[key]["password"] === password && users[key]["email"] === email) {
         console.log("found", users[key]["password"])
-        res.redirect("/urls");
-        
-      } else {
-        res.statusCode = 403;
+        console.log(users)
+        console.log("reqbodyusername", req.body.id)
+        res.cookie("user_id", users[key]["id"])
+        res.redirect("/urls")
       }
     }
-    
+
+    console.log("found email, pass not matching.")
+    return res.sendStatus(403)
+
   } else if (!emailLookup(email)) {
-    res.statusCode = 403;
-  };
-  
-  res.cookie("user_id", req.body.username)
-  // res.render("urls_login", templateVars)
+    console.log("email not found")
+    res.sendStatus(403)
+  }
+
+  res.render("urls_login", templateVars)
   // res.cookie("user_id", req.body.username);
+  // .redirect("/")
 });
 
 //logout route
@@ -177,8 +184,8 @@ app.post("/register", (req, res) => {
   const keyId = id;
 
   if (email === "" || password === "") {
-    // return res.send("404: Please enter in an email/password.")
-    res.statusCode = 404;
+    return res.send("404: Please enter in an email/password.")
+    // res.statusCode = 404;
   } 
   
   if (!emailLookup(email)) {
@@ -187,9 +194,10 @@ app.post("/register", (req, res) => {
       email, 
       password
     }
+
   } else if (emailLookup(email)) {
-    // return res.send("404: This email already exists.");
-    res.statusCode = 404;
+    return res.send("404: This email already exists.");
+    // res.statusCode = 404;
   };
 
   console.log(req.body)
