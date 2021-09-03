@@ -4,10 +4,9 @@ const PORT = 8080; // default port 8080
 const bcrypt = require('bcrypt');
 const cookieSession = require('cookie-session');
 const bodyParser = require("body-parser");
-app.use(bodyParser.urlencoded({extended: true}));
+const { generateRandomString, getUserByEmail, urlsForUser} = require("./helpers")
 
-// const cookieParser = require('cookie-parser');
-// app.use(cookieParser());
+app.use(bodyParser.urlencoded({extended: true}));
 
 app.set("view engine", "ejs");
 
@@ -17,38 +16,6 @@ app.use(cookieSession({
    // Cookie Options
    maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }));
-
-//implementing random string function for creation of shortURL string
-function generateRandomString() {
-  let uniqueURL = "";
-  uniqueURL = Math.random().toString(36).substr(2, 6);
-  return uniqueURL;
-};
-
-//implementing email look up function to determine whether the email exists.
-const emailLookup = (email) => {
-  for (let key in users) {
-    if (email === users[key]["email"]) {
-      console.log("email", email)
-      console.log("userskeyemail", users[key]["email"])
-      return key;
-    }
-  }
-  return undefined;
-};
-
-//implementing filter of the url database based on specific userIDs.
-const urlsForUser = (id) => {
-  let urlDatabaseFilter = {};
-
-  for (let key in urlDatabase) {
-    console.log("urldatabasekey", urlDatabase[key])
-    if(Object.values(urlDatabase[key]).indexOf(id) > -1) {
-      urlDatabaseFilter[key] = urlDatabase[key]
-    }
-  }
-  return urlDatabaseFilter;
-};
 
 const urlDatabase = {
   "b2xVn2": {
@@ -80,10 +47,10 @@ app.get("/", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  let filteredURLS = urlsForUser(req.session.user_id)
+  let filteredURLS = urlsForUser(req.session.user_id, urlDatabase);
   console.log("filteredURLS", filteredURLS);
   const templateVars = { 
-    urls: urlsForUser(req.session.user_id),
+    urls: filteredURLS,
     user: req.session.user_id,
     users: users    };
   res.render("urls_index", templateVars);
@@ -103,7 +70,7 @@ app.post("/urls", (req, res) => {
   };
 
   const templateVars = { 
-    urls: urlsForUser(req.session.user_id),
+    urls: urlsForUser(req.session.user_id, urlDatabase),
     user: req.session.user_id,
     users: users   };
   res.render("urls_index", templateVars);
@@ -133,14 +100,14 @@ app.post("/register", (req, res) => {
   if (email === "" || password === "") {
     return res.send("404: Please enter in an email/password.")
   } 
-  if (!emailLookup(email)) {
+  if (!getUserByEmail(email, users)) {
     users[keyId] = {
       id,
       email, 
       password: hashedPassword
     }
     
-  } else if (emailLookup(email) !== undefined) {
+  } else if (getUserByEmail(email, users) !== undefined) {
     return res.send("404: This email already exists.");
     // res.statusCode = 404;
   };
@@ -163,9 +130,11 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  const userKey = emailLookup(email);
+  const userKey = getUserByEmail(email, users);
+  console.log("getuserbyemail", getUserByEmail(email, users))
+  console.log("email", email)
 
-  if (!emailLookup(email)) {
+  if (!getUserByEmail(email, users)) {
     return res.status(403).send("Cannot find email.")
 
   } else if (bcrypt.compareSync(password, users[userKey]["password"]) && users[userKey]["email"] === email) {
