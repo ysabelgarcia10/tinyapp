@@ -10,8 +10,6 @@ const generateRandomString = () => {
 const getUserByEmail = (email, users) => {
   for (let key in users) {
     if (email === users[key]["email"]) {
-      console.log("email", email)
-      console.log("userskeyemail", users[key]["email"])
       return key;
     }
   }
@@ -23,7 +21,6 @@ const urlsForUser = (id, urlDatabase) => {
   let urlDatabaseFilter = {};
 
   for (let key in urlDatabase) {
-    console.log("urldatabasekey", urlDatabase[key])
     if(Object.values(urlDatabase[key]).indexOf(id) > -1) {
       urlDatabaseFilter[key] = urlDatabase[key]
     }
