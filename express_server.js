@@ -1,7 +1,8 @@
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
-let uniqueURL = "";
+const bcrypt = require('bcrypt');
+
 // const cookieSession = require('cookie-session');
 
 app.set("view engine", "ejs");
@@ -13,6 +14,7 @@ app.set("view engine", "ejs");
 
 //implementing random string function for creation of shortURL string
 function generateRandomString() {
+  let uniqueURL = "";
   uniqueURL = Math.random().toString(36).substr(2, 6);
   return uniqueURL;
 };
@@ -21,6 +23,8 @@ function generateRandomString() {
 const emailLookup = (email) => {
   for (let key in users) {
     if (email === users[key]["email"]) {
+      console.log("email", email)
+      console.log("userskeyemail", users[key]["email"])
       return key;
     }
   }
@@ -124,17 +128,16 @@ app.post("/register", (req, res) => {
     const password = req.body.password;
     const id = generateRandomString();
     const keyId = id;
+    const hashedPassword = bcrypt.hashSync(password, 10);
     
   if (email === "" || password === "") {
     return res.send("404: Please enter in an email/password.")
-    // res.statusCode = 404;
   } 
-  
   if (!emailLookup(email)) {
     users[keyId] = {
       id,
       email, 
-      password
+      password: hashedPassword
     }
     
   } else if (emailLookup(email) !== undefined) {
@@ -161,12 +164,20 @@ app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   const userKey = emailLookup(email);
+  // const hashedPassword = bcrypt.hashSync(password, 10);
+  // console.log("emailentered", email);
+  // console.log("passwordentered", password);
+  // console.log("hashedPass", hashedPassword);
+  // console.log("userKeypass", users[userKey]["password"])
+  // console.log(bcrypt.compareSync(users[userKey]["password"], password));
 
   if (!emailLookup(email)) {
     return res.status(403).send("Cannot find email.")
-  } else if (users[userKey]["password"] === password && users[userKey]["email"] === email) {
+
+  } else if (bcrypt.compareSync(password, users[userKey]["password"]) && users[userKey]["email"] === email) {
     res.cookie("user_id", userKey)
     res.redirect("/urls")
+    
   } else {
     return res.status(403).send("The username or password do not match.")
   }
