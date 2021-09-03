@@ -98,7 +98,6 @@ app.post("/urls", (req, res) => {
     "userID": req.cookies.user_id
   };
 
-  console.log("under post urls", req.cookies.user_id);
   const templateVars = { 
     urls: urlsForUser(req.cookies["user_id"]),
     user: req.cookies["user_id"],
@@ -191,10 +190,19 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   
-  if (urlDatabase[shortURL] === undefined) {
+  console.log("urlDatabase", urlDatabase);
+  console.log("reqcookiesuserid", req.cookies.user_id);
+  console.log("urldatabase[shorturl]", urlDatabase[shortURL])
+  
+  if (!urlDatabase[shortURL]) {
     return res.status(404).send("This tinyApp link does not exist.");
-  };
-
+    
+  } else if (!req.cookies.user_id) {
+    return res.status(403).send("log in first before editing");
+    
+  } else if (req.cookies.user_id !== urlDatabase[shortURL]["userID"])
+  return res.status(403).send("You are not the owner of this link.")
+  
   const longURL = urlDatabase[shortURL]["longURL"];
   const templateVars = { 
     shortURL,
@@ -218,6 +226,7 @@ app.get("/u/:shortURL", (req, res) => {
 app.post("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = req.body.longURL
+
   urlDatabase[shortURL]["longURL"] = longURL;
   console.log("urlDatabase after", urlDatabase)
   res.redirect("/urls");
@@ -225,6 +234,10 @@ app.post("/urls/:shortURL", (req, res) => {
 
 //deletes a URL
 app.post("/urls/:shortURL/delete", (req, res) => {
+  if (!req.cookies.user_id) {
+    return res.status(403).send("log in first before deleting");
+  };
+
   const shortURL = req.params.shortURL;
   delete urlDatabase[shortURL];
   console.log("after Delete:", urlDatabase);
